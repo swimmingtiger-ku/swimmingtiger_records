@@ -441,7 +441,7 @@ function renderRecords(){
   const secs=[{k:"개인 종목",it:[]},{k:"단체전",it:[]},{k:"킥 · 핀",it:[]},{k:"대학연맹전 종목",it:[]}];let uni=false;
   BEST.slice(2).forEach(r=>{const lab=String(r?.[0]??"").trim();if(!lab)return;if(lab.includes("대학연맹전")){uni=true;return}
     const it={lab,t:String(r[1]??"").trim(),n:String(r[2]??"").trim(),m:String(r[3]??"").trim()};
-    (uni?secs[3]:lab.includes("계영")?secs[1]:/킥|핀/.test(lab)?secs[2]:secs[0]).it.push(it)});
+    (uni?secs[3]:/킥|핀/.test(lab)?secs[2]:lab.includes("계영")?secs[1]:secs[0]).it.push(it)});
   const ys=BEST.slice(2).map(r=>(String(r?.[3]??"").match(/^(\d{4})/)||[])[1]).filter(Boolean).sort();const latest=ys[ys.length-1];
   $("#recOut").innerHTML=secs.filter(s=>s.it.length).map(s=>{const rel=s.k==="단체전";
     return `<div class="sec-h">${s.k}</div><div class="tbl"><table><thead><tr><th class="l">종목</th><th>기록</th><th class="l">${rel?"명단":"이름"}</th><th class="l">대회</th></tr></thead><tbody>${s.it.map(it=>it.t?`<tr><td class="l">${esc(it.lab)}</td><td class="t">${esc(fmt(it.t))}</td><td class="l">${(rel?it.n.split(/\s+/):[it.n]).filter(Boolean).map(n=>`<button class="nlink" type="button" data-n="${esc(n)}">${esc(n)}</button>`).join(" ")}</td><td class="l">${esc(it.m)}${latest&&it.m.startsWith(latest)?`<span class="yr-new">${latest} 갱신</span>`:""}</td></tr>`:`<tr><td class="l">${esc(it.lab)}</td><td colspan="3" class="l" style="color:var(--muted)">기록 없음</td></tr>`).join("")}</tbody></table></div>`}).join("");
