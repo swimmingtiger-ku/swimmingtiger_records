@@ -205,9 +205,9 @@ td.meet{max-width:220px;overflow:hidden;text-overflow:ellipsis}
       <button role="tab" id="tab-search" data-view="search" type="button">기록 검색</button>
       <button role="tab" id="tab-ranks" data-view="ranks" type="button">종목별 순위</button>
       <button role="tab" id="tab-season" data-view="season" type="button">시즌 베스트</button>
-      <button role="tab" id="tab-records" data-view="records" type="button">고려대 기록</button>
-      <button role="tab" id="tab-history" data-view="history" type="button">고려대 기록 변천사</button>
-      <button role="tab" id="tab-graph" data-view="graph" type="button">선수 기록 추이</button>
+      <button role="tab" id="tab-graph" data-view="graph" type="button">개인 기록 추이</button>
+      <button role="tab" id="tab-records" data-view="records" type="button">수호회 베스트 기록</button>
+      <button role="tab" id="tab-history" data-view="history" type="button">수호회 기록 변천사</button>
     </nav>
     <div class="sync"><i id="syncDot"></i><span id="syncText"></span><button class="lock" id="lockBtn" type="button">잠그기</button></div>
   </div>
@@ -269,26 +269,10 @@ td.meet{max-width:220px;overflow:hidden;text-overflow:ellipsis}
     </section>
   </div>
 
-  <!-- 기록 변천사 -->
-  <div class="wrap" id="view-history" hidden>
-    <section class="box">
-      <h1>고려대 기록 변천사</h1>
-      <div class="filters">
-        <span class="sel"><select id="hStroke" aria-label="종목"></select></span>
-        <span class="sel"><select id="hDist" aria-label="거리"></select></span>
-        <span class="sel"><select id="hGender" aria-label="성별"></select></span>
-        <span class="sel"><select id="hPool" aria-label="풀규격"><option value="50m">50m 풀</option><option value="25m">25m 풀</option><option value="">풀규격 전체</option></select></span>
-      </div>
-      <div class="note">수호회(고려대) 역대 최고기록이 언제, 누구에 의해 바뀌어 왔는지 보여줍니다. 날짜를 모르는 대회는 그 해 마지막에 둡니다. 점을 누르면 대회와 기록이 나옵니다.</div>
-      <div class="chart" id="hChart"></div>
-      <div class="tbl" id="hTable"></div>
-    </section>
-  </div>
-
   <!-- 기록 그래프 -->
   <div class="wrap" id="view-graph" hidden>
     <section class="box">
-      <h1>선수 기록 추이</h1>
+      <h1>개인 기록 추이</h1>
       <div class="filters">
         <span class="gq"><input id="gName" type="search" list="gNames" placeholder="선수 이름 (예: 홍길동)" autocomplete="off" aria-label="선수 이름"><datalist id="gNames"></datalist></span>
         <span class="sel"><select id="gEvent" aria-label="종목"></select></span>
@@ -303,10 +287,26 @@ td.meet{max-width:220px;overflow:hidden;text-overflow:ellipsis}
   <!-- 고려대 기록 -->
   <div class="wrap" id="view-records" hidden>
     <section class="box">
-      <h1>고려대 기록</h1>
+      <h1>수호회 베스트 기록</h1>
       <div id="recOut" style="display:flex;flex-direction:column;gap:14px"></div>
     </section>
   </div>
+  <!-- 기록 변천사 -->
+  <div class="wrap" id="view-history" hidden>
+    <section class="box">
+      <h1>수호회 기록 변천사</h1>
+      <div class="filters">
+        <span class="sel"><select id="hStroke" aria-label="종목"></select></span>
+        <span class="sel"><select id="hDist" aria-label="거리"></select></span>
+        <span class="sel"><select id="hGender" aria-label="성별"></select></span>
+        <span class="sel"><select id="hPool" aria-label="풀규격"><option value="50m">50m 풀</option><option value="25m">25m 풀</option><option value="">풀규격 전체</option></select></span>
+      </div>
+      <div class="note">수호회 역대 최고기록이 언제, 누구에 의해 바뀌어 왔는지 보여줍니다. 날짜를 모르는 대회는 그 해 마지막에 둡니다. 점을 누르면 대회와 기록이 나옵니다.</div>
+      <div class="chart" id="hChart"></div>
+      <div class="tbl" id="hTable"></div>
+    </section>
+  </div>
+
 </main>
 
 <script>
@@ -445,7 +445,7 @@ function renderRecords(){
 }
 
 /* ---------- 화면 전환 ---------- */
-const VIEWS=["search","ranks","season","history","graph","records"];
+const VIEWS=["search","ranks","season","graph","records","history"];
 function show(v){if(!VIEWS.includes(v))v="search";VIEWS.forEach(x=>{$("#view-"+x).hidden=x!==v;$("#tab-"+x).setAttribute("aria-selected",x===v)});
   if(v==="search")renderSearch();if(v==="ranks")renderRanks();if(v==="season")renderSeason();if(v==="history")renderHistory();if(v==="graph")renderGraph();if(v==="records")renderRecords()}
 function go(v){if(location.hash!=="#"+v)location.hash=v;else show(v)}
