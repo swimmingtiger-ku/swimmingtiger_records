@@ -56,7 +56,7 @@ button,select,input{font:inherit;color:inherit}
 .mark b{font-family:var(--f-num);font-style:italic;font-weight:700;font-size:28px;letter-spacing:.02em;line-height:1}
 .mark span{font-size:13px;opacity:.85;font-weight:600}
 .nav{display:flex;gap:2px;flex:1 1 auto;overflow-x:auto}
-.nav button{background:none;border:0;color:var(--brand-ink);opacity:.72;font-weight:700;font-size:14.5px;padding:17px 12px 15px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.nav button{background:none;border:0;color:var(--brand-ink);opacity:.72;font-weight:700;font-size:14px;padding:17px 9px 15px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
 .nav button[aria-selected="true"]{opacity:1;border-bottom-color:#fff}
 .sync{display:flex;align-items:center;gap:7px;font-size:12px;opacity:.9;margin-left:auto;padding-block:8px}
 .sync i{width:7px;height:7px;border-radius:50%;background:#ffffff80;flex:none}
@@ -147,6 +147,7 @@ td.meet{max-width:220px;overflow:hidden;text-overflow:ellipsis}
 @media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}.card:hover{border-color:var(--muted)}}
 
 /* 시즌·변천사·그래프 */
+.pre{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .tile b{display:block;font-family:var(--f-num);font-size:30px;font-weight:600;line-height:1.1}
@@ -336,8 +337,8 @@ function build(){
   rows=LOG.filter(r=>r&&r.some(c=>String(c??"").trim())).map((r,i)=>{
     const c=[...r,"","","","","","","","",""].slice(0,9).map(x=>String(x??"").trim());
     const [y,g,n,e,t,m,rk,sz,nt]=c; const relay=isRelay(e);
-    const {st,d}=splitEv(e);
-    return {i,y,g:g||"남",raw:n.replace(/\s+/g," "),names:relay?n.split(/\s+/).filter(Boolean):[n],ev:e,st,d,t,s:sec(t),meet:m,rk,sz,note:nt,relay};
+    const {st,d}=splitEv(e);const sm=nt.match(/^(예선|결선)\s*(?:·\s*)?(.*)$/);
+    return {i,y,g:g||"남",raw:n.replace(/\s+/g," "),names:relay?n.split(/\s+/).filter(Boolean):[n],ev:e,st,d,t,s:sec(t),meet:m,rk,sz,note:sm?sm[2]:nt,stage:sm?sm[1]:"",relay};
   }).filter(r=>r.ev&&r.s<Infinity);
   const best={};
   rows.forEach(r=>{if(r.relay)return;const k=r.raw+"|"+r.ev;if(!best[k]||r.s<best[k].s)best[k]=r});
@@ -354,7 +355,9 @@ function dateLabel(r){if(r.dp==="day")return r.dd.replace(/-/g,".");if(r.dp==="m
 const MEDAL={1:["#fff3b0","#f2c230","#b8860b","#8a6408"],2:["#ffffff","#d4d9de","#9aa3ab","#6f7880"],3:["#ffd7b5","#d98c4e","#9c5a2b","#6e3d1a"]};
 function medalSvg(n,size){const [hi,mid,lo,edge]=MEDAL[n];const id="medal"+n;const w=size||30;
   return `<svg class="medal" width="${w}" height="${Math.round(w*42/32)}" viewBox="0 0 32 42" role="img" aria-label="${n}위"><path d="M6 0h7l5 15h-7z" fill="#2457a6"/><path d="M26 0h-7l-5 15h7z" fill="#c8102e"/><path d="M13 0h6l-3 9z" fill="#ffffff" opacity=".85"/><circle cx="16" cy="28" r="12.5" fill="url(#${id})" stroke="${edge}" stroke-width="1.2"/><circle cx="16" cy="28" r="9" fill="none" stroke="${edge}" stroke-opacity=".55" stroke-width="1"/><text x="16" y="32.5" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="13" fill="${edge}">${n}</text></svg>`}
-function placeHtml(rk){const n=rankNum(rk);if(n&&n<=3)return medalSvg(n);return rk?esc(rk):'<span style="opacity:.4">–</span>'}
+function medalOf(r){const n=rankNum(r.rk);return n&&n<=3&&r.stage!=="예선"?n:0}
+function rkCell(r,size){const m=medalOf(r);if(m)return medalSvg(m,size);if(!r.rk)return r.stage==="예선"?'<span class="pre">예선</span>':"";return r.stage==="예선"?`<span class="pre">예선 ${esc(r.rk)}</span>`:esc(r.rk)}
+function placeHtml(r){return rkCell(r)||'<span style="opacity:.4">–</span>'}
 function poolTag(sz){return sz?`<span class="pool${sz==="25m"?" p25":""}">${esc(sz)}</span>`:""}
 
 /* 선택 상자 채우기 */
@@ -404,9 +407,9 @@ function renderSearch(){
   res.innerHTML=S.slice(0,shown).map(r=>`
     <article class="card">
       <div class="c-name">${r.relay?`<div class="team">${r.names.map(n=>`<span class="${hitN(n)?"hit":""}">${esc(n)}</span>`).join("")}</div>`:`<div class="nm">${esc(r.raw)}</div>`}${r.note?`<div class="yr">${esc(r.note)}</div>`:""}</div>
-      <div class="c-ev"><span class="pill">${r.relay?"단체":"개인"} · ${r.g==="혼성"?"혼성":r.g+"자"}</span><span class="pill ev">${esc(evLabel(r.ev))}</span></div>
+      <div class="c-ev"><span class="pill">${r.relay?"단체":"개인"} · ${r.g==="혼성"?"혼성":r.g+"자"}${r.stage?" · "+r.stage:""}</span><span class="pill ev">${esc(evLabel(r.ev))}</span></div>
       <div class="c-time"><span class="t">${esc(fmt(r.t))}</span>${r.pb?'<span class="pb">PB</span>':""}</div>
-      <div class="c-place">${placeHtml(r.rk)}</div>
+      <div class="c-place">${placeHtml(r)}</div>
       <div class="c-meet"><div class="mt">${esc(r.meet)}</div><div class="md"><span>${esc(dateLabel(r))}</span>${poolTag(r.sz)}</div></div>
     </article>`).join("")+(S.length>shown?`<button class="more" id="more" type="button">더 보기 (${S.length-shown}건 남음)</button>`:"");
 }
@@ -429,7 +432,7 @@ function renderRanks(){
   let prev=null,pr=0;
   const body=L.map((r,i)=>{const rk=prev!==null&&r.s===prev?pr:i+1;prev=r.s;pr=rk;
     const nm=r.relay?r.names.map(n=>`<button class="nlink" type="button" data-n="${esc(n)}">${esc(n)}</button>`).join(" "):`<button class="nlink" type="button" data-n="${esc(r.raw)}">${esc(r.raw)}</button>`;
-    return `<tr><td class="rk">${rk}</td><td class="l">${nm}</td><td>${esc(stLabel(r.st))}</td><td>${r.d}m</td><td class="t">${esc(fmt(r.t))}</td><td>${esc(r.y)}</td><td class="meet">${esc(r.meet)}</td><td>${rankNum(r.rk)&&rankNum(r.rk)<=3?medalSvg(rankNum(r.rk),22):esc(r.rk)}</td><td>${poolTag(r.sz)}</td><td>${esc(r.note)}</td></tr>`}).join("");
+    return `<tr><td class="rk">${rk}</td><td class="l">${nm}</td><td>${esc(stLabel(r.st))}</td><td>${r.d}m</td><td class="t">${esc(fmt(r.t))}</td><td>${esc(r.y)}</td><td class="meet">${esc(r.meet)}</td><td>${rkCell(r,22)}</td><td>${poolTag(r.sz)}</td><td>${esc(r.note)}</td></tr>`}).join("");
   $("#rTable").innerHTML=`<table><thead><tr><th>#</th><th class="l">${relay?"팀 명단":"이름"}</th><th>영법</th><th>거리</th><th>기록</th><th>년</th><th>대회</th><th>순위</th><th>규격</th><th>비고</th></tr></thead><tbody>${body||`<tr><td colspan="10" style="color:var(--muted);padding:28px">조건에 맞는 기록이 없습니다.</td></tr>`}</tbody></table>`;
 }
 
@@ -471,14 +474,14 @@ $("#gEvent").addEventListener("change",()=>{gEv=$("#gEvent").value;renderGraph()
 function bestPer(list){const seen=new Set();return list.filter(r=>{const k=r.relay?r.raw+"|"+r.i:r.raw;if(seen.has(k))return false;seen.add(k);return true})}
 function cell(r){if(!r)return'<td class="l" style="color:var(--muted)">–</td>';
   const nm=r.relay?r.names.map(n=>`<button class="nlink" type="button" data-n="${esc(n)}">${esc(n)}</button>`).join(" "):`<button class="nlink pn" type="button" data-n="${esc(r.raw)}">${esc(r.raw)}</button>`;
-  return `<td class="l"><div class="pc">${nm}<span class="pt">${esc(fmt(r.t))} ${r.sz==="25m"?poolTag(r.sz):""}</span><span class="pm">${esc(r.meet)}</span></div></td>`}
+  return `<td class="l"><div class="pc">${nm}<span class="pt">${esc(fmt(r.t))} ${r.sz==="25m"?poolTag(r.sz):""}</span><span class="pm">${esc(r.meet)}${r.stage?" · "+r.stage:""}</span></div></td>`}
 function renderSeason(){
   const ys=years(); fill($("#seYear"),ys.map(y=>({v:y,l:y+"년"})),null);
   const y=$("#seYear").value,g=$("#seGender").value,p=$("#sePool").value;
   $("#seTitle").textContent=y+" 시즌 베스트";
   const Y=rows.filter(r=>r.y===y);
   const people=new Set(Y.flatMap(r=>r.names));const meets=new Set(Y.map(r=>r.meet));
-  const md=[1,2,3].map(n=>Y.filter(r=>rankNum(r.rk)===n).length);
+  const md=[1,2,3].map(n=>Y.filter(r=>medalOf(r)===n).length);
   const nr=BEST.slice(2).filter(r=>String(r?.[3]??"").startsWith(y)&&String(r?.[1]??"").trim()).length;
   $("#seTiles").innerHTML=[[Y.length,"기록"],[meets.size,"출전 대회"],[people.size,"출전 선수"],[md[0]+md[1]+md[2],`입상 (금${md[0]} 은${md[1]} 동${md[2]})`],[nr,"고려대 기록 수립"]].map(([v,l])=>`<div class="tile"><b>${v}</b><span>${l}</span></div>`).join("");
   const L=Y.filter(r=>r.g===g&&(!p||r.sz===p));
@@ -542,7 +545,7 @@ function renderHistory(){
   const L=rows.filter(r=>r.st===st&&String(r.d)===d&&r.g===g&&(!p||r.sz===p)).sort((a,b)=>a.order-b.order||a.s-b.s);
   const steps=[];let cur=Infinity;L.forEach(r=>{if(r.s<cur){steps.push({r,prev:cur});cur=r.s}});
   const last=steps.length-1;
-  $("#hChart").innerHTML=chartSvg(steps.map((s,i)=>({x:s.r.ts,y:s.r.s,approx:s.r.dp!=="day",ring:i===last,label:fmt(s.r.t),tipT:fmt(s.r.t),tip:`${s.r.raw} · ${s.r.meet} · ${dateLabel(s.r)} · ${s.r.sz}`})),{step:true});
+  $("#hChart").innerHTML=chartSvg(steps.map((s,i)=>({x:s.r.ts,y:s.r.s,approx:s.r.dp!=="day",ring:i===last,label:fmt(s.r.t),tipT:fmt(s.r.t),tip:`${s.r.raw} · ${s.r.meet}${s.r.stage?" "+s.r.stage:""} · ${dateLabel(s.r)} · ${s.r.sz}`})),{step:true});
   const body=steps.slice().reverse().map((s,i)=>{const r=s.r;const who=r.relay?r.names.map(n=>`<button class="nlink" type="button" data-n="${esc(n)}">${esc(n)}</button>`).join(" "):`<button class="nlink" type="button" data-n="${esc(r.raw)}">${esc(r.raw)}</button>`;
     return `<tr><td class="rk">${steps.length-i}</td><td class="t">${esc(fmt(r.t))}</td><td>${s.prev<Infinity?`<span class="down">−${(s.prev-r.s).toFixed(2)}</span>`:'<span class="dt">첫 기록</span>'}</td><td class="l">${who}</td><td class="meet">${esc(r.meet)}</td><td class="dt">${esc(dateLabel(r))}</td><td>${poolTag(r.sz)}</td></tr>`}).join("");
   $("#hTable").innerHTML=`<table><thead><tr><th>#</th><th>기록</th><th>단축</th><th class="l">${isRelay(st)?"팀 명단":"이름"}</th><th>대회</th><th>날짜</th><th>규격</th></tr></thead><tbody>${body||`<tr><td colspan="7" style="color:var(--muted);padding:28px">기록이 없습니다.</td></tr>`}</tbody></table>`;
@@ -562,8 +565,8 @@ function renderGraph(){
   if(!name||!mine.length){$("#gChart").innerHTML=`<div class="empty" style="border:0"><b>${name?"'"+esc(name)+"' 선수의 개인 기록이 없습니다":"선수 이름을 입력해 주세요"}</b><span>이름을 고르면 종목별 기록이 시간 순서대로 그래프에 나옵니다.</span></div>`;$("#gTable").innerHTML="";return}
   const L=mine.filter(r=>r.ev===gEv&&(!p||r.sz===p)).sort((a,b)=>a.ts-b.ts||a.s-b.s);
   const pb=L.length?Math.min(...L.map(r=>r.s)):0;
-  $("#gChart").innerHTML=chartSvg(L.map(r=>({x:r.ts,y:r.s,approx:r.dp!=="day",yearOnly:r.dp==="year",ring:r.s===pb,label:L.length<=14?fmt(r.t):"",tipT:fmt(r.t),tip:`${r.meet} · ${dateLabel(r)} · ${r.sz}${r.rk?" · "+r.rk:""}`})));
-  const body=L.slice().reverse().map(r=>`<tr><td class="dt">${esc(dateLabel(r))}</td><td class="t">${esc(fmt(r.t))} ${r.s===pb?'<span class="pb">PB</span>':""}</td><td class="meet">${esc(r.meet)}</td><td>${rankNum(r.rk)&&rankNum(r.rk)<=3?medalSvg(rankNum(r.rk),20):esc(r.rk)}</td><td>${poolTag(r.sz)}</td></tr>`).join("");
+  $("#gChart").innerHTML=chartSvg(L.map(r=>({x:r.ts,y:r.s,approx:r.dp!=="day",yearOnly:r.dp==="year",ring:r.s===pb,label:L.length<=14?fmt(r.t):"",tipT:fmt(r.t),tip:`${r.meet}${r.stage?" "+r.stage:""} · ${dateLabel(r)} · ${r.sz}${r.rk?" · "+r.rk:""}`})));
+  const body=L.slice().reverse().map(r=>`<tr><td class="dt">${esc(dateLabel(r))}</td><td class="t">${esc(fmt(r.t))} ${r.s===pb?'<span class="pb">PB</span>':""}</td><td class="meet">${esc(r.meet)}</td><td>${rkCell(r,20)}</td><td>${poolTag(r.sz)}</td></tr>`).join("");
   $("#gTable").innerHTML=`<table><thead><tr><th>날짜</th><th>기록</th><th>대회</th><th>순위</th><th>규격</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
