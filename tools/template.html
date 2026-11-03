@@ -371,7 +371,8 @@ async function decrypt(pw){
   const buf=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(ENC.iv)},key,b64(ENC.data));
   return JSON.parse(new TextDecoder().decode(buf));
 }
-const store={get(){try{return localStorage.getItem("suho_pw")}catch(_){return null}},set(v){try{localStorage.setItem("suho_pw",v)}catch(_){}},del(){try{localStorage.removeItem("suho_pw")}catch(_){}}};
+try{localStorage.removeItem("suho_pw")}catch(_){}
+const store={get(){try{return sessionStorage.getItem("suho_pw")}catch(_){return null}},set(v){try{sessionStorage.setItem("suho_pw",v)}catch(_){}},del(){try{sessionStorage.removeItem("suho_pw")}catch(_){}}};
 async function unlock(pw,remember){
   const d=await decrypt(pw);
   LOG=d.log;BEST=d.best;SNAP_DATE=d.snap;
