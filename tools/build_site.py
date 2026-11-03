@@ -7,6 +7,7 @@ data.json 형식 (저장소에 올리지 않음):
   {"snap": "11월 3일",
    "log":  [[년도, 성별, 이름, 종목, 기록, 대회, 순위, 규격, 비고], ...],   # '2018~ 기록모음' 탭, 머리글 제외
    "best": [[...], ...]}                                                  # '고려대 기록(2018~)' 탭 A:D 전체
+대회 날짜는 tools/meet_dates.json에서 자동으로 합쳐짐 (시트에는 없음).
 """
 import argparse, base64, json, os
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -21,7 +22,10 @@ ap.add_argument("--password", required=True)
 ap.add_argument("--out", default=os.path.join(here, "..", "index.html"))
 a = ap.parse_args()
 
-plain = json.dumps(json.load(open(a.data, encoding="utf-8")), ensure_ascii=False, separators=(",", ":")).encode()
+data = json.load(open(a.data, encoding="utf-8"))
+dates = json.load(open(os.path.join(here, "meet_dates.json"), encoding="utf-8"))
+data["dates"] = {k: v for k, v in dates.items() if not k.startswith("_")}
+plain = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode()
 salt, iv = os.urandom(16), os.urandom(12)
 key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=ITER).derive(a.password.encode())
 ct = AESGCM(key).encrypt(iv, plain, None)
