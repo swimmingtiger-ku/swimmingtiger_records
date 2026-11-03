@@ -1,0 +1,391 @@
+<title>수호회 기록실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,700&family=Gothic+A1:wght@400;500;600;700;800&display=swap">
+<style>
+html,body{margin:0}img{max-width:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Layout: 크림슨 상단 바(워드마크 + 메뉴) → 큰 검색창 → 필터 드롭다운 줄 → 결과 카드 목록. 순위·최고기록은 표 */
+:root{
+  --bg:#ffffff; --panel:#f4f5f7; --card:#ffffff; --fg:#16181d; --muted:#6b7280; --line:#e3e5ea;
+  --brand:#8c1d40; --brand-ink:#ffffff; --brand-soft:#f7e8ed; --link:#a3123f;
+  --chip:#eef0f3; --gold:#d4a017; --silver:#9aa3ad; --bronze:#b56a3c; --pb:#a3123f;
+  --f-ko:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-num:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121317; --panel:#1b1d23; --card:#1b1d23; --fg:#eceef2; --muted:#9aa0ab; --line:#2c2f37;
+  --brand:#6e1532; --brand-ink:#ffffff; --brand-soft:#3a1b26; --link:#f07a9a;
+  --chip:#262932; --gold:#e8bd3c; --silver:#b9c1ca; --bronze:#d28b5c; --pb:#e0557a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121317; --panel:#1b1d23; --card:#1b1d23; --fg:#eceef2; --muted:#9aa0ab; --line:#2c2f37;
+  --brand:#6e1532; --brand-ink:#ffffff; --brand-soft:#3a1b26; --link:#f07a9a;
+  --chip:#262932; --gold:#e8bd3c; --silver:#b9c1ca; --bronze:#d28b5c; --pb:#e0557a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ko);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+
+/* 상단 바 */
+.bar{background:var(--brand);color:var(--brand-ink);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.bar .wrap{display:flex;align-items:center;gap:8px 24px;flex-wrap:wrap;padding-block:0}
+.mark{display:flex;align-items:center;gap:10px;padding-block:8px;text-decoration:none;color:inherit}
+.mark img{height:50px;width:auto;display:block}
+.mark span{font-size:16px!important;opacity:1!important;font-weight:800!important;letter-spacing:-.01em}
+.mark b{font-family:var(--f-num);font-style:italic;font-weight:700;font-size:28px;letter-spacing:.02em;line-height:1}
+.mark span{font-size:13px;opacity:.85;font-weight:600}
+.nav{display:flex;gap:2px;flex:1 1 auto;overflow-x:auto}
+.nav button{background:none;border:0;color:var(--brand-ink);opacity:.72;font-weight:700;font-size:14.5px;padding:17px 12px 15px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.nav button[aria-selected="true"]{opacity:1;border-bottom-color:#fff}
+.sync{display:flex;align-items:center;gap:7px;font-size:12px;opacity:.9;margin-left:auto;padding-block:8px}
+.sync i{width:7px;height:7px;border-radius:50%;background:#ffffff80;flex:none}
+.sync i.live{background:#5fe08f}.sync i.warn{background:#ffd166}
+.sync button{background:#ffffff1f;border:1px solid #ffffff55;color:#fff;border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer}
+
+main .wrap{padding-block:24px 56px;display:flex;flex-direction:column;gap:16px}
+
+/* 검색창 */
+.q{position:relative}
+.q svg{position:absolute;left:20px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.q input{width:100%;font-size:18px;padding:16px 20px 16px 54px;border:2px solid var(--line);border-radius:999px;background:var(--bg)}
+.q input:focus{border-color:var(--brand);outline:none}
+
+/* 필터 줄 */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.sel{position:relative;display:inline-flex}
+.sel select{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 32px 8px 13px;font-size:14px;font-weight:600;cursor:pointer}
+.sel select.on{border-color:var(--brand);background:var(--brand-soft);color:var(--link)}
+.sel::after{content:"";position:absolute;right:13px;top:50%;width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-70%) rotate(45deg);pointer-events:none;opacity:.6}
+.reset{background:none;border:0;color:var(--muted);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.check{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;cursor:pointer;padding:0 4px}
+.check input{accent-color:var(--brand);width:16px;height:16px}
+
+.reshead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:6px}
+.reshead h2{margin:0;font-size:17px;font-weight:800}
+.reshead h2 em{font-style:normal;color:var(--muted);font-weight:500;margin-left:4px}
+.who-chips{display:flex;flex-wrap:wrap;gap:6px}
+.wchip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 11px;font-size:13px;cursor:pointer}
+.wchip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+/* 결과 카드 */
+.list{display:flex;flex-direction:column;gap:10px}
+.card{display:grid;grid-template-columns:minmax(120px,1.1fr) minmax(130px,1fr) 104px 64px minmax(160px,1.6fr);align-items:center;gap:14px 18px;border:1px solid var(--line);border-radius:14px;padding:16px 22px;background:var(--card)}
+.c-name{min-width:0}
+.c-name .nm{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.c-name .yr{font-size:12.5px;color:var(--muted)}
+.team{display:grid;grid-template-columns:repeat(2,auto);justify-content:start;gap:1px 12px;font-size:14.5px;font-weight:600}
+.team .hit{color:var(--link);font-weight:800}
+.c-ev{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.pill{font-size:12.5px;padding:4px 12px;border-radius:6px;background:var(--chip);color:var(--muted);font-weight:600;white-space:nowrap}
+.pill.ev{background:var(--brand-soft);color:var(--link);font-weight:800;font-size:13.5px}
+.c-time{text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px}
+.c-time .t{font-family:var(--f-num);font-weight:600;font-size:31px;line-height:1;font-variant-numeric:tabular-nums}
+.pb{font-family:var(--f-num);font-size:12px;font-weight:700;letter-spacing:.06em;background:var(--pb);color:#fff;border-radius:4px;padding:1px 7px}
+.c-place{text-align:center;font-weight:700;font-size:17px;color:var(--muted)}
+.c-meet{text-align:right;min-width:0}
+.c-meet .mt{color:var(--link);font-weight:700;font-size:15.5px}
+.c-meet .md{font-size:12.5px;color:var(--muted);display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.pool{font-size:11.5px;font-weight:700;border:1px solid var(--line);border-radius:4px;padding:0 6px}
+.pool.p25{border-color:var(--link);color:var(--link)}
+.medal{display:inline-block;vertical-align:middle}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:34px 20px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:6px;align-items:center}
+.empty b{color:var(--fg);font-size:16px}
+.more{align-self:center;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 22px;font-weight:700;cursor:pointer}
+
+/* 표 */
+.box{background:var(--panel);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.box h1{margin:0;font-size:22px;font-weight:800;display:flex;align-items:center;gap:10px}
+.box .filters{border:0;padding:0}
+.tbl{overflow-x:auto;background:var(--card);border-radius:12px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:14.5px}
+th{background:var(--panel);color:var(--muted);font-weight:600;font-size:13px;padding:12px 10px;text-align:center;white-space:nowrap}
+td{padding:12px 10px;border-top:1px solid var(--line);text-align:center;white-space:nowrap}
+td.l,th.l{text-align:left}
+td.t{font-family:var(--f-num);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+td.rk{color:var(--muted);font-family:var(--f-num);font-size:17px}
+td.meet{max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.nlink{background:none;border:0;padding:0;cursor:pointer;font-weight:700;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+.nlink:hover{color:var(--link);text-decoration-color:currentColor}
+.sec-h{font-size:15px;font-weight:800;margin:6px 2px 0}
+.yr-new{font-size:11px;font-weight:800;color:var(--link);margin-left:6px}
+.note{font-size:12.5px;color:var(--muted)}
+
+@media (max-width:760px){
+  .card{grid-template-columns:1fr auto;gap:10px 12px;padding:14px 16px}
+  .c-name{grid-column:1}
+  .c-time{grid-column:2;grid-row:1 / span 2;align-items:flex-end}
+  .c-ev{grid-column:1;flex-direction:row;flex-wrap:wrap}
+  .c-place{grid-column:2;text-align:right}
+  .c-meet{grid-column:1;grid-row:3;text-align:left}
+  .c-meet .md{justify-content:flex-start}
+  .q input{font-size:16px;padding:13px 16px 13px 48px}
+  .q svg{left:17px}
+  .mark b{font-size:24px}
+  .sync{margin-left:0;width:100%;padding-top:0}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}.card:hover{border-color:var(--muted)}}
+
+/* 비밀번호 화면 */
+.gate{position:fixed;inset:0;z-index:50;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px}
+.gate form{display:flex;flex-direction:column;align-items:center;gap:14px;width:min(340px,100%);text-align:center}
+.gate img{height:120px;width:auto}
+.gate h1{margin:0;font-size:26px;font-weight:800}
+.gate p{margin:0;font-size:14px;opacity:.85}
+.gate input{width:100%;font-size:18px;text-align:center;letter-spacing:.2em;padding:13px 16px;border-radius:12px;border:0;background:#fff;color:#16181d}
+.gate button{width:100%;font-weight:800;font-size:16px;padding:13px;border-radius:12px;border:2px solid #fff;background:transparent;color:#fff;cursor:pointer}
+.gate .err{min-height:20px;font-size:13.5px;color:#ffd166}
+.lock{background:none;border:1px solid #ffffff55;color:#fff;border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer}
+</style>
+</head>
+<body>
+
+
+<div class="gate" id="gate">
+  <form id="gateForm" autocomplete="off">
+    <img src="logo.png" alt="수호회 로고">
+    <h1>수호회 기록실</h1>
+    <p>동아리 비밀번호를 입력해 주세요</p>
+    <input id="pw" type="password" inputmode="numeric" aria-label="비밀번호" autofocus>
+    <button type="submit" id="gateBtn">입장</button>
+    <div class="err" id="gateErr" role="alert"></div>
+  </form>
+</div>
+<header class="bar">
+  <div class="wrap">
+    <a class="mark" href="#search"><img src="logo.png" alt="수호회 로고" width="58" height="43"><span>수호회 기록실</span></a>
+    <nav class="nav" role="tablist">
+      <button role="tab" id="tab-search" data-view="search" type="button">기록 검색</button>
+      <button role="tab" id="tab-ranks" data-view="ranks" type="button">종목별 순위</button>
+      <button role="tab" id="tab-records" data-view="records" type="button">고려대 기록</button>
+    </nav>
+    <div class="sync"><i id="syncDot"></i><span id="syncText"></span><button class="lock" id="lockBtn" type="button">잠그기</button></div>
+  </div>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><radialGradient id="medal1" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#fff3b0"/><stop offset=".45" stop-color="#f2c230"/><stop offset="1" stop-color="#b8860b"/></radialGradient><radialGradient id="medal2" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#d4d9de"/><stop offset="1" stop-color="#9aa3ab"/></radialGradient><radialGradient id="medal3" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#ffd7b5"/><stop offset=".45" stop-color="#d98c4e"/><stop offset="1" stop-color="#9c5a2b"/></radialGradient></defs></svg>
+<main>
+  <!-- 기록 검색 -->
+  <div class="wrap" id="view-search">
+    <div class="q">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" placeholder="선수 이름으로 검색 (예: 홍길동)" autocomplete="off" aria-label="선수 이름 검색">
+    </div>
+    <div class="filters" id="sFilters">
+      <span class="sel"><select id="fKind" aria-label="구분"><option value="">구분</option><option value="ind">개인전</option><option value="rel">단체전</option></select></span>
+      <span class="sel"><select id="fGender" aria-label="성별"><option value="">성별</option><option value="남">남자</option><option value="여">여자</option><option value="혼성">혼성</option></select></span>
+      <span class="sel"><select id="fStroke" aria-label="종목"></select></span>
+      <span class="sel"><select id="fDist" aria-label="거리"></select></span>
+      <span class="sel"><select id="fYear" aria-label="연도"></select></span>
+      <span class="sel"><select id="fPool" aria-label="풀규격"><option value="">풀규격</option><option value="50m">50m</option><option value="25m">25m</option></select></span>
+      <label class="check"><input type="checkbox" id="fPB"> PB만</label>
+      <button class="reset" id="fReset" type="button">초기화</button>
+    </div>
+    <div class="reshead" id="resHead" hidden>
+      <h2>검색 결과<em id="resCount"></em></h2>
+      <span class="sel"><select id="fSort" aria-label="정렬"><option value="ev">종목순</option><option value="time">기록빠른순</option><option value="new">최신순</option></select></span>
+    </div>
+    <div class="who-chips" id="whoChips" hidden></div>
+    <div class="list" id="results"></div>
+  </div>
+
+  <!-- 종목별 순위 -->
+  <div class="wrap" id="view-ranks" hidden>
+    <section class="box">
+      <h1>종목별 순위</h1>
+      <div class="filters">
+        <span class="sel"><select id="rStroke" aria-label="종목"></select></span>
+        <span class="sel"><select id="rDist" aria-label="거리"></select></span>
+        <span class="sel"><select id="rGender" aria-label="성별"></select></span>
+        <span class="sel"><select id="rYear" aria-label="연도"></select></span>
+        <span class="sel"><select id="rPool" aria-label="풀규격"><option value="">풀규격 전체</option><option value="50m">50m</option><option value="25m">25m</option></select></span>
+        <label class="check" id="rBestWrap"><input type="checkbox" id="rBest" checked> 선수별 최고기록만</label>
+      </div>
+      <div class="tbl" id="rTable"></div>
+    </section>
+  </div>
+
+  <!-- 고려대 기록 -->
+  <div class="wrap" id="view-records" hidden>
+    <section class="box">
+      <h1>고려대 기록</h1>
+      <div class="note">'고려대 기록(2018~)' 탭 기준 · 장수로(50m) 최고기록</div>
+      <div id="recOut" style="display:flex;flex-direction:column;gap:14px"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+const ENC=__ENC__;
+let SNAP_DATE="",LOG=[],BEST=[];
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const isRelay=ev=>ev.includes("계영");
+function sec(t){t=String(t??"").trim();if(!t)return Infinity;const p=t.split(":");const v=p.length===2?(+p[0])*60+(+p[1]):+t;return isNaN(v)?Infinity:v}
+function fmt(t){t=String(t??"").trim();if(!t)return"";if(t.includes(":")){const [m,s]=t.split(":");const n=+s;return isNaN(n)?t:m+":"+n.toFixed(2).padStart(5,"0")}const n=+t;return isNaN(n)?t:n.toFixed(2)}
+const rankNum=r=>{const m=String(r||"").match(/^(\d+)/);return m?+m[1]:null};
+
+/* 종목 = 영법 + 거리 */
+const ONE={자:"자유형",접:"접영",배:"배영",평:"평영"};
+const STROKE_ORDER=["자유형","접영","배영","평영","개인혼영","자유형킥","핀접영","핀자유형"];
+const RELAY_ORDER=["계영","혼계영","배영계영","접영계영","평영계영","혼성계영","혼성혼계영"];
+function splitEv(ev){const m=ev.match(/^(.*?)(\d+)$/);return m?{st:m[1],d:+m[2]}:{st:ev,d:0}}
+function stLabel(st){if(st.length===2&&ONE[st[0]]&&ONE[st[1]])return ONE[st[0]]+"·"+ONE[st[1]];return st}
+function evLabel(ev){const {st,d}=splitEv(ev);return stLabel(st)+(d?" "+d+"m":"")}
+function stGroup(st){if(RELAY_ORDER.includes(st)||st.includes("계영"))return 2;if(st.length===2&&ONE[st[0]]&&ONE[st[1]])return 1;return 0}
+function stKey(st){const g=stGroup(st);const arr=g===2?RELAY_ORDER:STROKE_ORDER;const i=arr.indexOf(st);return [0,2,1][g]*100+(i<0?50:i)}
+const stSort=(a,b)=>stKey(a)-stKey(b)||a.localeCompare(b);
+
+let rows=[];
+function build(){
+  rows=LOG.filter(r=>r&&r.some(c=>String(c??"").trim())).map((r,i)=>{
+    const c=[...r,"","","","","","","","",""].slice(0,9).map(x=>String(x??"").trim());
+    const [y,g,n,e,t,m,rk,sz,nt]=c; const relay=isRelay(e);
+    const {st,d}=splitEv(e);
+    return {i,y,g:g||"남",raw:n.replace(/\s+/g," "),names:relay?n.split(/\s+/).filter(Boolean):[n],ev:e,st,d,t,s:sec(t),meet:m,rk,sz,note:nt,relay};
+  }).filter(r=>r.ev&&r.s<Infinity);
+  const best={};
+  rows.forEach(r=>{if(r.relay)return;const k=r.raw+"|"+r.ev;if(!best[k]||r.s<best[k].s)best[k]=r});
+  rows.forEach(r=>r.pb=!r.relay&&best[r.raw+"|"+r.ev]===r);
+}
+
+/* 메달 아이콘 */
+const MEDAL={1:["#fff3b0","#f2c230","#b8860b","#8a6408"],2:["#ffffff","#d4d9de","#9aa3ab","#6f7880"],3:["#ffd7b5","#d98c4e","#9c5a2b","#6e3d1a"]};
+function medalSvg(n,size){const [hi,mid,lo,edge]=MEDAL[n];const id="medal"+n;const w=size||30;
+  return `<svg class="medal" width="${w}" height="${Math.round(w*42/32)}" viewBox="0 0 32 42" role="img" aria-label="${n}위"><path d="M6 0h7l5 15h-7z" fill="#2457a6"/><path d="M26 0h-7l-5 15h7z" fill="#c8102e"/><path d="M13 0h6l-3 9z" fill="#ffffff" opacity=".85"/><circle cx="16" cy="28" r="12.5" fill="url(#${id})" stroke="${edge}" stroke-width="1.2"/><circle cx="16" cy="28" r="9" fill="none" stroke="${edge}" stroke-opacity=".55" stroke-width="1"/><text x="16" y="32.5" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="13" fill="${edge}">${n}</text></svg>`}
+function placeHtml(rk){const n=rankNum(rk);if(n&&n<=3)return medalSvg(n);return rk?esc(rk):'<span style="opacity:.4">–</span>'}
+function poolTag(sz){return sz?`<span class="pool${sz==="25m"?" p25":""}">${esc(sz)}</span>`:""}
+
+/* 선택 상자 채우기 */
+function fill(sel,opts,ph,keep){const v=keep??sel.value;sel.innerHTML=(ph!==null?`<option value="">${ph}</option>`:"")+opts.map(o=>typeof o==="string"?`<option value="${esc(o)}">${esc(o)}</option>`:o.group?`<optgroup label="${esc(o.group)}">${o.items.map(x=>`<option value="${esc(x.v)}">${esc(x.l)}</option>`).join("")}</optgroup>`:`<option value="${esc(o.v)}">${esc(o.l)}</option>`).join("");
+  if([...sel.options].some(o=>o.value===v))sel.value=v;else sel.value=sel.options[0]?.value??"";sel.classList.toggle("on",!!sel.value&&ph!==null)}
+function strokeOpts(src){const sts=[...new Set(src.map(r=>r.st))].sort(stSort);
+  const g=[[],[],[]];sts.forEach(s=>g[stGroup(s)].push({v:s,l:stLabel(s)}));
+  return [{group:"개인 종목",items:g[0]},{group:"단체전",items:g[2]},{group:"대학연맹전 2종목",items:g[1]}].filter(x=>x.items.length)}
+const years=()=>[...new Set(rows.map(r=>r.y).filter(Boolean))].sort().reverse();
+
+/* ---------- 기록 검색 ---------- */
+let shown=40, pickName="";
+function sFilter(){
+  const q=$("#q").value.trim().toLowerCase();
+  const f={k:$("#fKind").value,g:$("#fGender").value,st:$("#fStroke").value,d:$("#fDist").value,y:$("#fYear").value,p:$("#fPool").value,pb:$("#fPB").checked};
+  let L=rows.filter(r=>(!f.k||(f.k==="rel")===r.relay)&&(!f.g||r.g===f.g)&&(!f.st||r.st===f.st)&&(!f.d||String(r.d)===f.d)&&(!f.y||r.y===f.y)&&(!f.p||r.sz===f.p)&&(!f.pb||r.pb));
+  let matched=[];
+  if(q){L=L.filter(r=>r.names.some(n=>n.toLowerCase().includes(q)));
+    matched=[...new Set(L.flatMap(r=>r.names.filter(n=>n.toLowerCase().includes(q))))].sort();
+    if(pickName&&matched.includes(pickName))L=L.filter(r=>r.names.includes(pickName));else pickName="";}
+  return {q,f,L,matched};
+}
+function syncSearchSelects(){
+  const kind=$("#fKind").value;
+  const base=rows.filter(r=>!kind||(kind==="rel")===r.relay);
+  fill($("#fStroke"),strokeOpts(base),"종목");
+  const st=$("#fStroke").value;
+  const ds=[...new Set(base.filter(r=>!st||r.st===st).map(r=>r.d))].filter(Boolean).sort((a,b)=>a-b);
+  fill($("#fDist"),ds.map(d=>({v:String(d),l:d+"m"})),"거리");
+  fill($("#fYear"),years().map(y=>({v:y,l:y+"년"})),"연도");
+  ["fKind","fGender","fPool"].forEach(id=>$("#"+id).classList.toggle("on",!!$("#"+id).value));
+}
+function renderSearch(){
+  syncSearchSelects();
+  const {q,f,L,matched}=sFilter();
+  const active=q||f.st;
+  const res=$("#results");
+  $("#resHead").hidden=!active; $("#whoChips").hidden=!(q&&matched.length>1);
+  if(!active){
+    res.innerHTML=`<div class="empty"><b>선수 이름을 검색하거나 종목을 골라 주세요</b><span>이름만 넣으면 그 선수의 개인·단체 기록이 모두 나오고, 위 항목으로 영법·거리·연도·풀규격을 좁힐 수 있습니다.</span><span>계영 명단에 있는 이름도 검색됩니다. 2018년부터 ${rows.length}개 기록</span></div>`;return}
+  if(q&&matched.length>1)$("#whoChips").innerHTML=`<button class="wchip" type="button" data-pick="" aria-pressed="${!pickName}">전체 ${matched.length}명</button>`+matched.map(n=>`<button class="wchip" type="button" data-pick="${esc(n)}" aria-pressed="${n===pickName}">${esc(n)}</button>`).join("");
+  const sort=$("#fSort").value;
+  const S=[...L].sort(sort==="new"?(a,b)=>b.y.localeCompare(a.y)||a.i-b.i:sort==="ev"?(a,b)=>stSort(a.st,b.st)||a.d-b.d||a.s-b.s:(a,b)=>a.s-b.s);
+  $("#resCount").textContent=L.length+"건";
+  if(!L.length){res.innerHTML=`<div class="empty"><b>조건에 맞는 기록이 없습니다</b><span>이름 일부만 입력하거나 고른 항목을 줄여 보세요.</span></div>`;return}
+  const hitN=n=>q&&n.toLowerCase().includes(q);
+  res.innerHTML=S.slice(0,shown).map(r=>`
+    <article class="card">
+      <div class="c-name">${r.relay?`<div class="team">${r.names.map(n=>`<span class="${hitN(n)?"hit":""}">${esc(n)}</span>`).join("")}</div>`:`<div class="nm">${esc(r.raw)}</div>`}${r.note?`<div class="yr">${esc(r.note)}</div>`:""}</div>
+      <div class="c-ev"><span class="pill">${r.relay?"단체":"개인"} · ${r.g==="혼성"?"혼성":r.g+"자"}</span><span class="pill ev">${esc(evLabel(r.ev))}</span></div>
+      <div class="c-time"><span class="t">${esc(fmt(r.t))}</span>${r.pb?'<span class="pb">PB</span>':""}</div>
+      <div class="c-place">${placeHtml(r.rk)}</div>
+      <div class="c-meet"><div class="mt">${esc(r.meet)}</div><div class="md"><span>${esc(r.y)}</span>${poolTag(r.sz)}</div></div>
+    </article>`).join("")+(S.length>shown?`<button class="more" id="more" type="button">더 보기 (${S.length-shown}건 남음)</button>`:"");
+}
+
+/* ---------- 종목별 순위 ---------- */
+function renderRanks(){
+  fill($("#rStroke"),strokeOpts(rows),null);
+  if(!$("#rStroke").dataset.init){$("#rStroke").value="자유형";$("#rStroke").dataset.init=1}
+  const st=$("#rStroke").value;
+  const ds=[...new Set(rows.filter(r=>r.st===st).map(r=>r.d))].filter(Boolean).sort((a,b)=>a-b);
+  fill($("#rDist"),ds.map(d=>({v:String(d),l:d+"m"})),null);
+  const d=$("#rDist").value;
+  const gs=["남","여","혼성"].filter(g=>rows.some(r=>r.st===st&&String(r.d)===d&&r.g===g));
+  fill($("#rGender"),gs.map(g=>({v:g,l:g==="혼성"?"혼성":g+"자"})),null);
+  fill($("#rYear"),years().map(y=>({v:y,l:y+"년"})),"연도 전체");
+  const g=$("#rGender").value,y=$("#rYear").value,p=$("#rPool").value;
+  const relay=isRelay(st); $("#rBestWrap").hidden=relay;
+  let L=rows.filter(r=>r.st===st&&String(r.d)===d&&r.g===g&&(!y||r.y===y)&&(!p||r.sz===p)).sort((a,b)=>a.s-b.s);
+  if(!relay&&$("#rBest").checked){const seen=new Set();L=L.filter(r=>!seen.has(r.raw)&&seen.add(r.raw))}
+  let prev=null,pr=0;
+  const body=L.map((r,i)=>{const rk=prev!==null&&r.s===prev?pr:i+1;prev=r.s;pr=rk;
+    const nm=r.relay?r.names.map(n=>`<button class="nlink" type="button" data-n="${esc(n)}">${esc(n)}</button>`).join(" "):`<button class="nlink" type="button" data-n="${esc(r.raw)}">${esc(r.raw)}</button>`;
+    return `<tr><td class="rk">${rk}</td><td class="l">${nm}</td><td>${esc(stLabel(r.st))}</td><td>${r.d}m</td><td class="t">${esc(fmt(r.t))}</td><td>${esc(r.y)}</td><td class="meet">${esc(r.meet)}</td><td>${rankNum(r.rk)&&rankNum(r.rk)<=3?medalSvg(rankNum(r.rk),22):esc(r.rk)}</td><td>${poolTag(r.sz)}</td><td>${esc(r.note)}</td></tr>`}).join("");
+  $("#rTable").innerHTML=`<table><thead><tr><th>#</th><th class="l">${relay?"팀 명단":"이름"}</th><th>영법</th><th>거리</th><th>기록</th><th>년</th><th>대회</th><th>순위</th><th>규격</th><th>비고</th></tr></thead><tbody>${body||`<tr><td colspan="10" style="color:var(--muted);padding:28px">조건에 맞는 기록이 없습니다.</td></tr>`}</tbody></table>`;
+}
+
+/* ---------- 고려대 기록 ---------- */
+function renderRecords(){
+  const secs=[{k:"개인 종목",it:[]},{k:"단체전",it:[]},{k:"킥 · 핀",it:[]},{k:"대학연맹전 종목",it:[]}];let uni=false;
+  BEST.slice(2).forEach(r=>{const lab=String(r?.[0]??"").trim();if(!lab)return;if(lab.includes("대학연맹전")){uni=true;return}
+    const it={lab,t:String(r[1]??"").trim(),n:String(r[2]??"").trim(),m:String(r[3]??"").trim()};
+    (uni?secs[3]:lab.includes("계영")?secs[1]:/킥|핀/.test(lab)?secs[2]:secs[0]).it.push(it)});
+  const ys=BEST.slice(2).map(r=>(String(r?.[3]??"").match(/^(\d{4})/)||[])[1]).filter(Boolean).sort();const latest=ys[ys.length-1];
+  $("#recOut").innerHTML=secs.filter(s=>s.it.length).map(s=>{const rel=s.k==="단체전";
+    return `<div class="sec-h">${s.k}</div><div class="tbl"><table><thead><tr><th class="l">종목</th><th>기록</th><th class="l">${rel?"명단":"이름"}</th><th class="l">대회</th></tr></thead><tbody>${s.it.map(it=>it.t?`<tr><td class="l">${esc(it.lab)}</td><td class="t">${esc(fmt(it.t))}</td><td class="l">${(rel?it.n.split(/\s+/):[it.n]).filter(Boolean).map(n=>`<button class="nlink" type="button" data-n="${esc(n)}">${esc(n)}</button>`).join(" ")}</td><td class="l">${esc(it.m)}${latest&&it.m.startsWith(latest)?`<span class="yr-new">${latest} 갱신</span>`:""}</td></tr>`:`<tr><td class="l">${esc(it.lab)}</td><td colspan="3" class="l" style="color:var(--muted)">기록 없음</td></tr>`).join("")}</tbody></table></div>`}).join("");
+}
+
+/* ---------- 화면 전환 ---------- */
+const VIEWS=["search","ranks","records"];
+function show(v){if(!VIEWS.includes(v))v="search";VIEWS.forEach(x=>{$("#view-"+x).hidden=x!==v;$("#tab-"+x).setAttribute("aria-selected",x===v)});
+  if(v==="search")renderSearch();if(v==="ranks")renderRanks();if(v==="records")renderRecords()}
+function go(v){if(location.hash!=="#"+v)location.hash=v;else show(v)}
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+function renderAll(){build();show((location.hash||"#search").slice(1))}
+
+document.addEventListener("click",e=>{
+  const n=e.target.closest(".nlink");if(n){$("#q").value=n.dataset.n;pickName="";shown=40;go("search");window.scrollTo({top:0});return}
+  const t=e.target.closest(".nav button");if(t){go(t.dataset.view);return}
+  const w=e.target.closest(".wchip");if(w){pickName=w.dataset.pick;shown=40;renderSearch();return}
+  if(e.target.closest("#more")){shown+=40;renderSearch();return}
+  if(e.target.closest("#fReset")){["fKind","fGender","fStroke","fDist","fYear","fPool"].forEach(id=>$("#"+id).value="");$("#fPB").checked=false;$("#q").value="";pickName="";shown=40;renderSearch();return}
+});
+$("#q").addEventListener("input",()=>{pickName="";shown=40;renderSearch()});
+["fKind","fGender","fStroke","fDist","fYear","fPool","fPB","fSort"].forEach(id=>$("#"+id).addEventListener("change",()=>{shown=40;renderSearch()}));
+["rStroke","rDist","rGender","rYear","rPool","rBest"].forEach(id=>$("#"+id).addEventListener("change",renderRanks));
+
+/* ---------- 비밀번호 ---------- */
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function decrypt(pw){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(ENC.salt),iterations:ENC.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const buf=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(ENC.iv)},key,b64(ENC.data));
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+const store={get(){try{return localStorage.getItem("suho_pw")}catch(_){return null}},set(v){try{localStorage.setItem("suho_pw",v)}catch(_){}},del(){try{localStorage.removeItem("suho_pw")}catch(_){}}};
+async function unlock(pw,remember){
+  const d=await decrypt(pw);
+  LOG=d.log;BEST=d.best;SNAP_DATE=d.snap;
+  $("#syncText").textContent=SNAP_DATE+" 기준";
+  if(remember)store.set(pw);
+  $("#gate").hidden=true;renderAll();
+}
+$("#gateForm").addEventListener("submit",async e=>{e.preventDefault();const pw=$("#pw").value;if(!pw)return;
+  $("#gateBtn").disabled=true;$("#gateErr").textContent="확인 중…";
+  try{await unlock(pw,true);$("#gateErr").textContent=""}catch(_){$("#gateErr").textContent="비밀번호가 맞지 않습니다";$("#pw").select()}
+  $("#gateBtn").disabled=false});
+$("#lockBtn").addEventListener("click",()=>{store.del();LOG=[];BEST=[];$("#pw").value="";$("#gate").hidden=false;$("#results").innerHTML="";$("#pw").focus()});
+(async()=>{const saved=store.get();if(saved){try{await unlock(saved,false);return}catch(_){store.del()}}$("#pw").focus()})();
+</script>
+</body>
+</html>
